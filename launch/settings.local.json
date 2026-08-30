@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(foreach \\($c in 'python','py','python3'\\) { $p = Get-Command $c -ErrorAction SilentlyContinue; if \\($p\\) { \"$c -> $\\($p.Source\\)\" } else { \"$c -> MISSING\" } })",
+      "PowerShell($ErrorActionPreference='Continue'; python --version; \"exit=$LASTEXITCODE\")",
+      "PowerShell(New-Item -ItemType Directory -Force C:\\\\KTP_Events_App\\\\assets\\\\photos)",
+      "PowerShell(try { $s=[IO.File]::Open\\('C:\\\\KTP_Events_App\\\\README.md','Open','ReadWrite','None'\\); \"README writable: YES\"; $s.Close\\(\\) } catch { \"README still locked\" })"
+    ]
+  }
+}

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#081359" />
+<meta name="description" content="Kappa Theta Pi at Syracuse University — brotherhood & social event RSVPs." />
+<title>KTP Events — Kappa Theta Pi at Syracuse</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23081359'/%3E%3Ctext x='16' y='22' font-family='Helvetica,Arial' font-size='15' font-weight='bold' fill='%23fff' text-anchor='middle'%3EKTP%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+<!-- ============ Boot / loading ============ -->
+<div id="boot" class="boot">
+  <div class="boot-mark">ΚΘΠ</div>
+  <div class="boot-msg">Loading…</div>
+</div>
+
+<!-- ============ Setup gate (shown when Firebase isn't configured) ============ -->
+<div id="setup-gate" class="gate" hidden></div>
+
+<!-- ============ Auth screen ============ -->
+<div id="auth-screen" class="auth" hidden>
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-greek">ΚΘΠ</div>
+      <h1 class="auth-title">KTP Events</h1>
+      <p class="auth-sub">Kappa Theta Pi &middot; Syracuse University</p>
+    </div>
+
+    <div class="seg" role="tablist">
+      <button class="seg-btn is-active" data-mode="signin" role="tab">Sign in</button>
+      <button class="seg-btn" data-mode="signup" role="tab">Create account</button>
+    </div>
+
+    <form id="auth-form" class="auth-form" novalidate>
+      <label class="field" id="f-name" hidden>
+        <span class="field-label">Full name</span>
+        <input type="text" name="displayName" autocomplete="name" placeholder="Andrew Harvey" />
+      </label>
+
+      <label class="field">
+        <span class="field-label">Email</span>
+        <input type="email" name="email" autocomplete="email" required placeholder="you@syr.edu" />
+      </label>
+
+      <label class="field">
+        <span class="field-label">Password</span>
+        <input type="password" name="password" autocomplete="current-password" required minlength="6" placeholder="At least 6 characters" />
+      </label>
+
+      <label class="field" id="f-grad" hidden>
+        <span class="field-label">Grad year <span class="opt">(optional)</span></span>
+        <input type="number" name="gradYear" min="2024" max="2035" placeholder="2028" />
+      </label>
+
+      <p class="auth-err" id="auth-err" hidden></p>
+
+      <button type="submit" class="btn btn-primary btn-block" id="auth-submit">Sign in</button>
+      <button type="button" class="linkish" id="auth-reset">Forgot password?</button>
+    </form>
+
+    <p class="auth-foot">Accounts are per-person so your RSVPs and profile follow you to any device.</p>
+  </div>
+</div>
+
+<!-- ============ App shell ============ -->
+<div id="app" class="shell" hidden>
+
+  <header class="topbar">
+    <button class="icon-btn" id="nav-toggle" aria-label="Open menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+    </button>
+    <div class="topbar-title">
+      <span class="topbar-greek">ΚΘΠ</span>
+      <span class="topbar-name" id="topbar-name">Home</span>
+    </div>
+    <div class="topbar-spacer"></div>
+  </header>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-greek">ΚΘΠ</div>
+      <div>
+        <div class="sb-title">KTP Events</div>
+        <div class="sb-sub">Syracuse University</div>
+      </div>
+    </div>
+
+    <nav class="sb-nav" id="sb-nav">
+      <a href="#/home"     class="sb-link" data-route="home">Home</a>
+      <a href="#/calendar" class="sb-link" data-route="calendar">Calendar</a>
+      <a href="#/past"     class="sb-link" data-route="past">Previous Events</a>
+      <a href="#/profile"  class="sb-link" data-route="profile">Profile</a>
+      <a href="#/admin"    class="sb-link officer-only" data-route="admin" hidden>Manage</a>
+    </nav>
+
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-avatar" id="sb-avatar">–</div>
+        <div class="sb-userinfo">
+          <div class="sb-username" id="sb-username">–</div>
+          <div class="sb-userrole" id="sb-userrole">Member</div>
+        </div>
+      </div>
+      <button class="linkish" id="signout">Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main" id="view" tabindex="-1"></main>
+</div>
+
+<!-- ============ Modal host ============ -->
+<div id="modal-host" class="modal-host" hidden>
+  <div class="modal-scrim" data-close></div>
+  <div class="modal" role="dialog" aria-modal="true">
+    <header class="modal-head">
+      <h2 id="modal-title">–</h2>
+      <button class="icon-btn" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+      </button>
+    </header>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ============ Toasts ============ -->
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

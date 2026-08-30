@@ -1,0 +1,588 @@
+/* ==========================================================================
+   KTP Events — design tokens
+   Palette + type sampled from the live chapter site (ktpcuse.com):
+     body text  rgb(17,51,75)   #11334B
+     nav/active rgb(8,19,89)    #081359
+     accent     rgb(34,46,119)  #222E77
+     muted      rgb(82,105,122) #52697A
+     base       #FFFFFF
+   Site type is futura-pt / hypatia-sans-pro (Adobe Typekit, domain-locked).
+   Jost is the closest freely-licensed geometric substitute for Futura PT.
+   Nav treatment on the site: uppercase, 700, 0.2em tracking, flat 0px buttons.
+   ========================================================================== */
+
+:root {
+  --ink:        #11334B;
+  --navy:       #081359;
+  --blue:       #222E77;
+  --muted:      #52697A;
+  --faint:      #8496A3;
+
+  --bg:         #FFFFFF;
+  --surface:    #F7F9FB;
+  --surface-2:  #EFF3F7;
+  --line:       #E1E7ED;
+  --line-strong:#C9D3DC;
+
+  /* functional status colours — deliberately desaturated so they read as
+     information, not decoration. The chapter site uses no orange. */
+  --risk:       #A8451A;
+  --risk-bg:    #FDF3EE;
+  --risk-line:  #F0D2C2;
+
+  --go:         #1B6B4A;
+  --go-bg:      #EFF6F2;
+  --go-line:    #CADED4;
+
+  --dead:       #7A8894;
+  --dead-bg:    #F3F5F7;
+
+  --new:        #222E77;
+  --new-bg:     #EFF1FA;
+
+  --radius:     3px;
+  --radius-lg:  4px;
+
+  --sb-w:       248px;
+  --content-max: 1100px;
+  --shadow:     0 1px 2px rgba(17,51,75,.06), 0 8px 24px rgba(17,51,75,.06);
+  --shadow-lg:  0 12px 48px rgba(8,19,89,.18);
+
+  --font: "Jost", "Futura", "Century Gothic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,h2,h3,h4 { margin: 0; font-weight: 600; color: var(--navy); letter-spacing: -0.01em; line-height: 1.2; }
+p { margin: 0; }
+a { color: var(--blue); text-decoration: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+/* ============================ Boot ============================ */
+.boot {
+  position: fixed; inset: 0; display: grid; place-content: center; gap: 12px;
+  justify-items: center; background: var(--bg); z-index: 200;
+}
+.boot-mark { font-size: 40px; font-weight: 700; color: var(--navy); letter-spacing: .06em; }
+.boot-msg  { font-size: 13px; color: var(--muted); letter-spacing: .16em; text-transform: uppercase; }
+
+/* ============================ Buttons ============================ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 18px; border: 1px solid transparent; border-radius: 0;
+  font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  cursor: pointer; background: transparent; transition: background .15s, color .15s, border-color .15s;
+  min-height: 44px; white-space: nowrap;
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary  { background: var(--navy); color: #fff; }
+.btn-primary:not(:disabled):hover { background: var(--blue); }
+.btn-ghost    { border-color: var(--line-strong); color: var(--ink); background: #fff; }
+.btn-ghost:not(:disabled):hover { border-color: var(--navy); color: var(--navy); }
+.btn-danger   { border-color: var(--risk-line); color: var(--risk); background: #fff; }
+.btn-danger:not(:disabled):hover { background: var(--risk-bg); }
+.btn-block    { width: 100%; }
+.btn-sm       { padding: 8px 12px; min-height: 38px; font-size: 11px; letter-spacing: .12em; }
+
+.linkish {
+  background: none; border: 0; padding: 6px 0; cursor: pointer;
+  color: var(--muted); font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+  font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+}
+.linkish:hover { color: var(--navy); }
+
+.icon-btn {
+  display: grid; place-items: center; width: 40px; height: 40px;
+  background: none; border: 0; border-radius: var(--radius); color: var(--ink); cursor: pointer;
+}
+.icon-btn:hover { background: var(--surface-2); }
+
+/* ============================ Forms ============================ */
+.field { display: block; margin-bottom: 14px; }
+.field-label {
+  display: block; margin-bottom: 6px; font-size: 11px; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+}
+.field-label .opt { font-weight: 400; letter-spacing: .06em; text-transform: none; color: var(--faint); }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 11px 12px; background: #fff;
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  font-size: 16px; /* 16px prevents iOS zoom-on-focus */
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(34,46,119,.10);
+}
+.field textarea { resize: vertical; min-height: 78px; line-height: 1.45; }
+.field-help { margin-top: 5px; font-size: 12px; color: var(--faint); line-height: 1.4; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Live thumbnail under the Photo URL field — catches a bad link while the
+   officer is still looking at the form. */
+.photo-preview {
+  display: flex; align-items: center; gap: 12px; margin: 0 0 14px;
+  padding: 10px; border: 1px solid var(--line); background: var(--surface);
+}
+.photo-preview img {
+  flex: 0 0 auto; display: block; width: 104px; aspect-ratio: 16 / 9;
+  object-fit: cover; border: 1px solid var(--line-strong); background: #fff;
+}
+.photo-preview span { font-size: 12px; line-height: 1.45; color: var(--muted); }
+.photo-preview.is-bad { border-color: var(--risk-line); background: var(--risk-bg); }
+.photo-preview.is-bad span { color: var(--risk); }
+
+.check { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--navy); flex: 0 0 auto; }
+.check span  { font-size: 14px; line-height: 1.4; }
+
+.seg { display: flex; gap: 0; border: 1px solid var(--line-strong); margin-bottom: 22px; }
+.seg-btn {
+  flex: 1; padding: 11px 8px; background: #fff; border: 0; cursor: pointer;
+  font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+}
+.seg-btn.is-active { background: var(--navy); color: #fff; }
+
+/* ============================ Auth ============================ */
+.auth { min-height: 100dvh; display: grid; place-items: center; padding: 24px 18px; background: var(--surface); }
+.auth-card { width: 100%; max-width: 400px; background: #fff; border: 1px solid var(--line); padding: 34px 28px 28px; box-shadow: var(--shadow); }
+.auth-brand { text-align: center; margin-bottom: 26px; }
+.auth-greek { font-size: 30px; font-weight: 700; color: var(--navy); letter-spacing: .05em; }
+.auth-title { font-size: 26px; margin-top: 8px; }
+.auth-sub { margin-top: 6px; font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.auth-form { margin-top: 4px; }
+.auth-err { margin: 4px 0 12px; padding: 10px 12px; background: var(--risk-bg); border: 1px solid var(--risk-line); color: var(--risk); font-size: 13px; line-height: 1.4; }
+.auth-foot { margin-top: 18px; text-align: center; font-size: 12px; color: var(--faint); line-height: 1.5; }
+#auth-reset { display: block; margin: 12px auto 0; }
+
+/* ============================ Setup gate ============================ */
+.gate { min-height: 100dvh; display: grid; place-items: start center; padding: 40px 18px; background: var(--surface); }
+.gate-card { width: 100%; max-width: 640px; background: #fff; border: 1px solid var(--line); padding: 32px; box-shadow: var(--shadow); }
+.gate-card h1 { font-size: 22px; margin-bottom: 6px; }
+.gate-card ol { padding-left: 20px; line-height: 1.7; font-size: 14px; }
+.gate-card code, .mono {
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  font-size: .88em; background: var(--surface-2); padding: 1px 5px; border-radius: 2px;
+}
+.gate-card pre { background: var(--surface); border: 1px solid var(--line); padding: 14px; overflow-x: auto; font-size: 12px; line-height: 1.5; }
+
+/* ============================ Shell ============================ */
+.shell { min-height: 100dvh; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: 6px;
+  height: 56px; padding: 0 8px;
+  background: rgba(255,255,255,.94); backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.topbar-greek { font-size: 17px; font-weight: 700; color: var(--navy); letter-spacing: .04em; }
+.topbar-name  { font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+
+.scrim { position: fixed; inset: 0; background: rgba(8,19,89,.34); z-index: 49; }
+
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0; width: var(--sb-w); z-index: 50;
+  background: #fff; border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; padding: 26px 0 18px;
+  transform: translateX(-100%); transition: transform .22s ease;
+}
+.sidebar.is-open { transform: translateX(0); box-shadow: var(--shadow-lg); }
+
+.sb-brand { display: flex; align-items: center; gap: 11px; padding: 0 22px 22px; border-bottom: 1px solid var(--line); }
+.sb-greek { font-size: 24px; font-weight: 700; color: var(--navy); letter-spacing: .04em; }
+.sb-title { font-size: 15px; font-weight: 600; color: var(--navy); }
+.sb-sub   { font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); margin-top: 1px; }
+
+.sb-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; }
+.sb-link {
+  display: block; padding: 13px 12px; border-left: 2px solid transparent;
+  font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--blue); border-radius: 0;
+}
+.sb-link:hover { background: var(--surface); }
+.sb-link.is-active { color: var(--navy); background: var(--surface-2); border-left-color: var(--navy); }
+
+.sb-foot { padding: 16px 22px 0; border-top: 1px solid var(--line); }
+.sb-user { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.sb-avatar {
+  width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center;
+  background: var(--navy); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .04em;
+}
+.sb-userinfo { min-width: 0; }
+.sb-username { font-size: 13px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-userrole { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+
+.main { padding: 22px 16px 64px; max-width: var(--content-max); margin: 0 auto; }
+.main:focus { outline: none; }
+
+@media (min-width: 900px) {
+  .topbar { display: none; }
+  .scrim  { display: none !important; }
+  /* Pinned open on desktop — kill the drawer animation so rotating a tablet
+     from portrait to landscape doesn't slide it in. */
+  .sidebar { transform: none; transition: none; }
+
+  /* The sidebar offset lives on the shell, not on .main. If .main carried a
+     margin-left it would beat its own `margin: 0 auto` and pin the column to
+     the sidebar, leaving a dead gutter on the right of a wide monitor.
+     Offsetting the shell instead lets .main centre inside what's left. */
+  .shell { padding-left: var(--sb-w); }
+  .main  { padding: 40px 40px 80px; }
+}
+
+/* ============================ Page furniture ============================ */
+.page-head { margin-bottom: 22px; }
+.page-title { font-size: 27px; letter-spacing: -.02em; }
+.page-sub { margin-top: 5px; font-size: 14px; color: var(--muted); line-height: 1.5; }
+
+.section { margin-bottom: 34px; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+}
+.section-count { font-size: 11px; font-weight: 600; color: var(--faint); letter-spacing: .08em; }
+
+/* Most of the year there's nothing on the calendar, so this is a primary state,
+   not an edge case. Generous padding and a real line length make an empty app
+   look intentional rather than half-loaded. */
+.empty {
+  display: grid; gap: 6px; place-content: center; justify-items: center;
+  min-height: 148px; padding: 36px 24px; text-align: center;
+  border: 1px dashed var(--line-strong); background: var(--surface);
+  color: var(--muted); font-size: 14px; line-height: 1.6;
+}
+.empty-lead { font-weight: 600; color: var(--ink); }
+.empty p { max-width: 46ch; }
+
+.divider { height: 1px; background: var(--line); margin: 26px 0; border: 0; }
+
+/* ============================ Home hero ============================ */
+/* Full width of the content column, so it lines up with the banner and the
+   cards and reinforces the centred column. aspect-ratio holds the space before
+   the file arrives, so the banner below it doesn't jump on load. No placeholder
+   background: a failed image removes the whole band, and we don't want a grey
+   slab sitting there in the meantime either. */
+.hero { margin-bottom: 22px; }
+.hero-img {
+  display: block; width: 100%; aspect-ratio: 3 / 1;
+  object-fit: cover; object-position: center;
+}
+
+/* ============================ Banner ============================ */
+.banner { border: 1px solid var(--line); margin-bottom: 30px; background: #fff; }
+.banner-strip { padding: 16px 18px; border-bottom: 1px solid var(--line); }
+.banner-strip:last-child { border-bottom: 0; }
+.banner-strip.is-risk { background: var(--risk-bg); border-bottom-color: var(--risk-line); }
+.banner-strip.is-new  { background: var(--new-bg); }
+.banner-label {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 11px;
+  font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+}
+.banner-strip.is-risk .banner-label { color: var(--risk); }
+.banner-strip.is-new  .banner-label { color: var(--new); }
+.banner-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+.banner-list { display: flex; flex-direction: column; gap: 8px; }
+.banner-item {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: 4px 12px;
+  padding: 8px 10px; background: rgba(255,255,255,.72); border: 1px solid var(--line);
+  cursor: pointer; text-align: left; width: 100%; font: inherit;
+}
+.banner-strip.is-risk .banner-item { border-color: var(--risk-line); }
+.banner-item:hover { border-color: var(--navy); }
+/* A flex-basis, not just min-width:0. The CTA is nowrap and reserves ~105px, so
+   in a narrow column the text was left with ~60px and the title shredded into
+   one word per line. With a basis of 150px the CTA drops to its own row instead
+   once the text can't have that much. */
+.banner-item-main { flex: 1 1 150px; min-width: 0; }
+/* Both block: these are meant to be two stacked lines. As inline spans they were
+   a single text flow — a short title left the meta running on after it
+   ("Bowling Fri, Sep 4 · 7 PM"), and margin-top on an inline box does nothing. */
+.banner-item-title { display: block; font-size: 14px; font-weight: 600; color: var(--navy); }
+.banner-item-meta  { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.banner-item-cta { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--risk); white-space: nowrap; flex: 0 0 auto; }
+.banner-empty { font-size: 13px; color: var(--faint); line-height: 1.5; padding: 4px 0 2px; }
+
+/* Three short strips stacked full-width waste the horizontal space on a wide
+   monitor and make the page read as sparse. Side by side they scan as a
+   dashboard row instead. Equal columns keep the three weights equal — the
+   at-risk strip shouldn't get more room just because it has more items. */
+@media (min-width: 900px) {
+  /* minmax(0, 1fr), not 1fr: a bare 1fr floors each column at its min-content
+     width, so one long meta string makes the columns unequal and pushes the
+     grid past the content column. */
+  .banner { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .banner-strip {
+    min-height: 128px;
+    border-bottom: 0;
+    border-right: 1px solid var(--line);
+  }
+  .banner-strip:last-child { border-right: 0; }
+  .banner-strip.is-risk { border-right-color: var(--risk-line); }
+}
+
+/* ============================ Event card ============================ */
+.card { border: 1px solid var(--line); background: #fff; margin-bottom: 12px; }
+.card.is-risk { border-color: var(--risk-line); }
+.card.is-dead { background: var(--dead-bg); }
+
+/* Optional per-event photo. Sits flush at the top of the card, inside its
+   border. aspect-ratio reserves the space so a lazily-loaded photo further down
+   Previous Events doesn't shove the page around as you scroll. A card with no
+   photo simply omits this element and is unchanged. */
+.card-photo { display: block; }
+.card-photo-img {
+  display: block; width: 100%; aspect-ratio: 16 / 9;
+  object-fit: cover; object-position: center;
+}
+.card.is-dead .card-photo-img { opacity: .55; }
+
+.card-top { display: flex; gap: 14px; padding: 16px 16px 14px; align-items: flex-start; }
+
+.datechip {
+  flex: 0 0 auto; width: 52px; text-align: center;
+  border: 1px solid var(--line-strong); padding: 6px 2px 7px; background: #fff;
+}
+.datechip-m { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.datechip-d { font-size: 21px; font-weight: 600; color: var(--navy); line-height: 1.1; }
+.datechip-w { font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.card.is-risk .datechip { border-color: var(--risk-line); }
+
+.card-main { flex: 1; min-width: 0; }
+.card-title { font-size: 17px; font-weight: 600; color: var(--navy); }
+.card-meta { margin-top: 4px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.card-desc { margin-top: 8px; font-size: 14px; color: var(--ink); line-height: 1.5; }
+
+.tagrow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px;
+  font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  border: 1px solid var(--line-strong); color: var(--muted); background: #fff; white-space: nowrap;
+}
+.pill.go    { color: var(--go);   border-color: var(--go-line);   background: var(--go-bg); }
+.pill.risk  { color: var(--risk); border-color: var(--risk-line); background: var(--risk-bg); }
+.pill.dead  { color: var(--dead); border-color: var(--line-strong); background: var(--dead-bg); }
+.pill.info  { color: var(--blue); border-color: #D3D8EE; background: var(--new-bg); }
+.pill.plain { color: var(--muted); }
+
+/* risk callout inside a card */
+.risk-note {
+  margin: 0 16px 14px; padding: 10px 12px;
+  background: var(--risk-bg); border: 1px solid var(--risk-line); color: var(--risk);
+  font-size: 13px; font-weight: 500; line-height: 1.45;
+}
+.dead-note {
+  margin: 0 16px 14px; padding: 10px 12px;
+  background: var(--dead-bg); border: 1px solid var(--line-strong); color: var(--muted); font-size: 13px; line-height: 1.45;
+}
+
+/* progress toward threshold */
+.thresh { margin: 0 16px 14px; }
+.thresh-bar { height: 5px; background: var(--surface-2); overflow: hidden; }
+.thresh-fill { height: 100%; background: var(--blue); transition: width .3s; }
+.thresh-fill.is-risk { background: var(--risk); }
+.thresh-fill.is-met  { background: var(--go); }
+.thresh-cap { margin-top: 6px; font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--muted); }
+
+/* RSVP controls */
+.rsvp { display: flex; gap: 8px; padding: 0 16px 14px; }
+.rsvp-btn {
+  flex: 1; padding: 11px 6px; min-height: 46px; cursor: pointer; background: #fff;
+  border: 1px solid var(--line-strong); border-radius: 0;
+  font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  transition: all .14s;
+}
+.rsvp-btn:hover { border-color: var(--navy); color: var(--navy); }
+.rsvp-btn.on-going    { background: var(--go);   border-color: var(--go);   color: #fff; }
+.rsvp-btn.on-deciding { background: var(--blue); border-color: var(--blue); color: #fff; }
+.rsvp-btn.on-out      { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink); }
+.rsvp-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* attendee lists */
+.roster { border-top: 1px solid var(--line); padding: 14px 16px; background: var(--surface); }
+.roster-group + .roster-group { margin-top: 14px; }
+.roster-head {
+  font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+}
+.roster-names { display: flex; flex-wrap: wrap; gap: 6px; }
+.person {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px;
+  background: #fff; border: 1px solid var(--line); font-size: 13px; color: var(--ink);
+}
+.person.me { border-color: var(--navy); font-weight: 600; }
+.person-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--blue); background: var(--new-bg); border: 1px solid #D8DDF0; padding: 1px 5px;
+}
+.person-none { font-size: 13px; color: var(--faint); font-style: italic; }
+
+.card-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 16px; border-top: 1px solid var(--line); background: #fff;
+}
+.card-foot-note { font-size: 11px; color: var(--faint); letter-spacing: .04em; }
+.card-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.disclosure {
+  width: 100%; padding: 11px 16px; background: #fff; border: 0; border-top: 1px solid var(--line);
+  text-align: left; cursor: pointer; color: var(--blue);
+  font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+}
+.disclosure:hover { background: var(--surface); }
+
+/* ============================ Officer planning panel ============================ */
+.planning { border-top: 1px solid var(--line); background: #FBFCFD; padding: 14px 16px; }
+.planning-head {
+  font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--blue); margin-bottom: 9px; display: flex; align-items: center; gap: 7px;
+}
+.planning-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+.planning-stat {
+  display: flex; align-items: baseline; gap: 6px; padding: 5px 10px;
+  background: #fff; border: 1px solid var(--line-strong);
+}
+.planning-stat b { font-size: 15px; font-weight: 700; color: var(--navy); }
+.planning-stat span { font-size: 12px; color: var(--muted); }
+.planning-note { margin-top: 9px; font-size: 11px; color: var(--faint); line-height: 1.45; }
+
+/* ============================ Profile ============================ */
+.spec-list { display: flex; flex-direction: column; gap: 10px; }
+.spec {
+  display: flex; align-items: center; gap: 12px; padding: 13px 14px;
+  border: 1px solid var(--line); background: #fff;
+}
+.spec.is-on { border-color: var(--line-strong); }
+.spec-main { flex: 1; min-width: 0; }
+.spec-label { font-size: 14px; font-weight: 600; color: var(--ink); }
+.spec-note { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.spec-ctrl { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+
+.vis-toggle {
+  display: inline-flex; border: 1px solid var(--line-strong); background: #fff;
+}
+.vis-toggle button {
+  padding: 5px 9px; background: none; border: 0; cursor: pointer;
+  font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint);
+}
+.vis-toggle button.on { background: var(--navy); color: #fff; }
+.vis-toggle button:disabled { opacity: .4; cursor: not-allowed; }
+
+.switch { position: relative; width: 42px; height: 24px; flex: 0 0 auto; }
+.switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 1; }
+.switch-track {
+  position: absolute; inset: 0; background: var(--line-strong); border-radius: 999px; transition: background .16s;
+}
+.switch-track::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+  background: #fff; border-radius: 50%; transition: transform .16s; box-shadow: 0 1px 3px rgba(0,0,0,.22);
+}
+.switch input:checked + .switch-track { background: var(--go); }
+.switch input:checked + .switch-track::after { transform: translateX(18px); }
+
+/* ============================ Calendar ============================ */
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.cal-month { font-size: 18px; font-weight: 600; color: var(--navy); letter-spacing: .01em; }
+.cal-nav { display: flex; gap: 4px; }
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--line); border-right: 0; border-bottom: 0; }
+.cal-dow {
+  padding: 8px 2px; text-align: center; background: var(--surface);
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+}
+.cal-cell {
+  position: relative; min-height: 78px; padding: 5px 4px 6px; background: #fff; text-align: left;
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  cursor: default; font: inherit; display: flex; flex-direction: column; gap: 3px; overflow: hidden;
+}
+.cal-cell.is-out { background: var(--surface); }
+.cal-cell.has-events { cursor: pointer; }
+.cal-cell.has-events:hover { background: var(--surface-2); }
+.cal-daynum { font-size: 11px; font-weight: 600; color: var(--muted); }
+.cal-cell.is-out .cal-daynum { color: var(--faint); opacity: .6; }
+.cal-cell.is-today .cal-daynum {
+  background: var(--navy); color: #fff; width: 20px; height: 20px;
+  display: grid; place-items: center; border-radius: 50%; font-size: 10px;
+}
+.cal-chip {
+  font-size: 9.5px; line-height: 1.25; padding: 2px 4px; border-left: 2px solid var(--blue);
+  background: var(--surface-2); color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cal-chip.risk { border-left-color: var(--risk); background: var(--risk-bg); color: var(--risk); }
+.cal-chip.dead { border-left-color: var(--dead); background: var(--dead-bg); color: var(--dead); text-decoration: line-through; }
+.cal-chip.go   { border-left-color: var(--go);   background: var(--go-bg);   color: var(--go); }
+.cal-more { font-size: 9px; color: var(--faint); padding-left: 4px; }
+
+.cal-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; }
+.cal-legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.cal-legend i { width: 10px; height: 10px; display: block; }
+
+@media (max-width: 640px) {
+  .cal-cell { min-height: 62px; padding: 4px 2px 5px; }
+  .cal-chip { font-size: 8.5px; padding: 1px 3px; }
+}
+
+/* ============================ Filters ============================ */
+.filters {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
+  padding: 14px; background: var(--surface); border: 1px solid var(--line); margin-bottom: 20px;
+}
+.filters .field { margin-bottom: 0; }
+.filters-foot { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.filters-summary { font-size: 12px; color: var(--muted); }
+
+/* stat strip on Past Events */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.stat { padding: 13px 14px; border: 1px solid var(--line); background: #fff; }
+.stat-n { font-size: 22px; font-weight: 700; color: var(--navy); line-height: 1.1; }
+.stat-l { margin-top: 3px; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+/* ============================ Modal ============================ */
+.modal-host { position: fixed; inset: 0; z-index: 100; display: grid; place-items: end center; }
+@media (min-width: 700px) { .modal-host { place-items: center; } }
+.modal-scrim { position: absolute; inset: 0; background: rgba(8,19,89,.42); }
+.modal {
+  position: relative; width: 100%; max-width: 560px; max-height: 92dvh;
+  background: #fff; display: flex; flex-direction: column; box-shadow: var(--shadow-lg);
+  animation: modal-in .18s ease;
+}
+@keyframes modal-in { from { transform: translateY(14px); opacity: 0; } }
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 12px 16px 20px; border-bottom: 1px solid var(--line); flex: 0 0 auto;
+}
+.modal-head h2 { font-size: 17px; }
+.modal-body { padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+.modal-actions .btn { flex: 1; }
+
+/* ============================ Toasts ============================ */
+.toasts { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 300; display: flex; flex-direction: column; gap: 8px; width: calc(100% - 32px); max-width: 400px; pointer-events: none; }
+.toast {
+  padding: 12px 15px; background: var(--navy); color: #fff; font-size: 13.5px; line-height: 1.4;
+  box-shadow: var(--shadow-lg); animation: toast-in .16s ease;
+}
+.toast.err { background: var(--risk); }
+@keyframes toast-in { from { transform: translateY(10px); opacity: 0; } }
+
+/* ============================ Misc ============================ */
+.note-box { padding: 13px 15px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; color: var(--muted); line-height: 1.55; }
+.note-box strong { color: var(--ink); }
+.inline-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.spinner-row { padding: 30px; text-align: center; color: var(--faint); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }

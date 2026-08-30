@@ -1,0 +1,179 @@
+rules_version = '2';
+
+/* ==========================================================================
+   KTP Events — Firestore security rules
+
+   Paste this whole file into:  Firebase console → Firestore Database → Rules → Publish
+
+   What these actually enforce (i.e. what a member can't get around by opening
+   devtools and calling Firestore directly):
+
+     • Only @syr.edu / @g.syr.edu accounts can read or write anything.
+     • Officer status can't be self-granted. Flipping isOfficer to true requires
+       an officerClaims doc, and creating that doc requires sending SHA-256 of
+       the officer passcode, which is compared against config/officer.codeHash —
+       a document no client can read.
+     • Private specs stay private. userSpecs/{uid} is readable by its owner and
+       by officers only; the public profile only ever carries the specs their
+       owner marked "shown".
+     • Only officers can create, edit, cancel or delete events — except for the
+       narrow case of materialising the next instance of a recurring series,
+       which any member's browser may do, but only if every field matches the
+       template exactly and it starts with an empty RSVP list.
+     • You can only write your own RSVP.
+   ========================================================================== */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* -------------------------------- helpers ------------------------------- */
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email != null;
+    }
+
+    // Chapter gate. Keep in sync with ALLOWED_EMAIL_DOMAINS in js/config.js.
+    // To allow any email address, replace the body with `return signedIn();`.
+    function isMember() {
+      return signedIn() && request.auth.token.email.matches('^[^@]+@(g[.])?syr[.]edu$');
+    }
+
+    function isOfficer() {
+      return isMember() &&
+        exists(/databases/$(database)/documents/officerClaims/$(request.auth.uid));
+    }
+
+    function officerCodeHash() {
+      return get(/databases/$(database)/documents/config/officer).data.codeHash;
+    }
+
+    function template(sid) {
+      return get(/databases/$(database)/documents/series/$(sid)).data;
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    /* ------------------------- config: server-side only ------------------------ */
+    /* Holds the officer passcode hash. get() inside rules bypasses these rules,
+       so the comparison below still works while clients see nothing. */
+
+    match /config/{doc} {
+      allow read, write: if false;
+    }
+
+    /* ----------------------- officer claims: write-only ---------------------- */
+    /* The plaintext passcode never leaves the browser — only its SHA-256. A wrong
+       passcode simply fails to satisfy the rule and comes back permission-denied. */
+
+    match /officerClaims/{uid} {
+      allow read:   if false;
+      allow create: if isMember()
+                    && request.auth.uid == uid
+                    && request.resource.data.hash is string
+                    && request.resource.data.hash == officerCodeHash();
+      allow update: if false;
+      allow delete: if isMember() && request.auth.uid == uid;   // step down
+    }
+
+    /* ------------------------------ public profiles ---------------------------- */
+
+    match /users/{uid} {
+      allow read: if isMember();
+
+      allow create: if isMember()
+                    && request.auth.uid == uid
+                    && request.resource.data.isOfficer == false;
+
+      // isOfficer may only become true if this account holds a verified claim.
+      allow update: if isMember()
+                    && request.auth.uid == uid
+                    && (request.resource.data.isOfficer == false || isOfficer());
+
+      allow delete: if false;
+    }
+
+    /* --------------------------- private specifications ------------------------ */
+    /* Owner reads/writes their own. Officers may read everyone's — that's what
+       backs the aggregate planning counts for people who kept a badge private.
+       Officers cannot write someone else's specs. */
+
+    match /userSpecs/{uid} {
+      allow read:  if isMember() && (request.auth.uid == uid || isOfficer());
+      allow write: if isMember() && request.auth.uid == uid;
+    }
+
+    /* --------------------------------- events -------------------------------- */
+
+    match /events/{eventId} {
+
+      // A member's browser may materialise the next occurrence of an active
+      // series, but only as a faithful copy of the template with no RSVPs.
+      function validSeriesInstance() {
+        return isMember()
+          && request.resource.data.seriesId is string
+          && exists(/databases/$(database)/documents/series/$(request.resource.data.seriesId))
+          && template(request.resource.data.seriesId).paused == false
+          && request.resource.data.title     == template(request.resource.data.seriesId).title
+          && request.resource.data.location  == template(request.resource.data.seriesId).location
+          && request.resource.data.category  == template(request.resource.data.seriesId).category
+          && request.resource.data.threshold == template(request.resource.data.seriesId).threshold
+          // .get(field, default) on BOTH sides, not direct access. Series
+          // templates created before photoUrl existed have no such key, and
+          // direct access on a missing key is an error — which would deny the
+          // create and silently stop every pre-existing series from generating.
+          && request.resource.data.get('photoUrl', null)
+             == template(request.resource.data.seriesId).get('photoUrl', null)
+          && request.resource.data.override  == null
+          && request.resource.data.outcome   == null
+          && request.resource.data.attendance == null
+          && request.resource.data.counts.going == 0
+          && request.resource.data.counts.deciding == 0;
+      }
+
+      // Members may only touch the denormalised RSVP tallies, by at most one at
+      // a time, and never below zero.
+      function countsOnly() {
+        return changedKeys().hasOnly(['counts'])
+          && request.resource.data.counts.going >= 0
+          && request.resource.data.counts.deciding >= 0
+          && math.abs(request.resource.data.counts.going - resource.data.counts.going) <= 1
+          && math.abs(request.resource.data.counts.deciding - resource.data.counts.deciding) <= 1;
+      }
+
+      allow read:   if isMember();
+      allow create: if isOfficer() || validSeriesInstance();
+      allow update: if isOfficer() || (isMember() && countsOnly());
+      allow delete: if isOfficer();
+
+      /* ---------------------------- RSVPs ---------------------------- */
+      /* Name-attached by design: everyone can see who's Going and who's Still
+         Deciding. You can only write your own. */
+
+      match /rsvps/{uid} {
+        allow read: if isMember();
+
+        allow create, update: if isMember()
+                              && request.auth.uid == uid
+                              && request.resource.data.uid == uid
+                              && request.resource.data.status in ['going', 'deciding'];
+
+        allow delete: if isMember() && (request.auth.uid == uid || isOfficer());
+      }
+    }
+
+    /* ---------------------------- recurring templates -------------------------- */
+
+    match /series/{seriesId} {
+      allow read:  if isMember();
+      allow write: if isOfficer();
+    }
+
+    /* ------------------------------- catch-all -------------------------------- */
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
