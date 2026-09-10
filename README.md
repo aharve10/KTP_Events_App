@@ -214,7 +214,7 @@ question, answered without re-running a survey.
 | Event categories | `js/config.js` → `CATEGORIES` |
 | The list of profile specs | `js/config.js` → `SPEC_PRESETS` (don't rename existing `key` values — that orphans people's saved settings) |
 | Seed events and their dates | `js/seed.js` |
-| Colours and type | `assets/styles.css` → the `:root` block at the top |
+| Colours and type | `assets/styles.css` → the `:root` block at the top, **and** the `[data-theme="dark"]` block below it — change both or the colour only moves in one theme |
 
 ### About the seed data
 
@@ -237,8 +237,16 @@ Palette and type were sampled from the live chapter site at <https://www.ktpcuse
 | `--ink` | `#11334B` | body text |
 | `--navy` | `#081359` | nav, headings |
 | `--blue` | `#222E77` | links, accents |
-| `--muted` | `#52697A` | secondary text |
+| `--muted` | `#45596B` | secondary text |
+| `--faint` | `#5C6D7A` | tertiary text |
 | `--bg` | `#FFFFFF` | base |
+
+`--muted` and `--faint` are a step darker than the site's own `#52697A` / `#8496A3`.
+At `#8496A3`, `--faint` measured 3.05:1 on white — under AA, on text carrying real
+information (grad year, turnout counts, the empty-state lines). Every text/background pair
+in the app is checked against AA in both themes, so if you move a colour, check what it
+lands on. `--faint` in particular is darker than it looks like it wants to be because it
+has to stay readable on `--surface-2`, where the date chip and visibility toggle put it.
 
 Worth knowing: **there is no Syracuse orange on the chapter site.** It's navy on white.
 The only warm colour in this app is a muted rust (`--risk`, `#A8451A`) used strictly to flag
@@ -248,6 +256,31 @@ The site sets type in `futura-pt` and `hypatia-sans-pro`, both Adobe Typekit and
 the ktpcuse.com domain, so they can't be reused here. **Jost** (Google Fonts) is a
 geometric Futura substitute and is a close match. Nav treatment copies the site: uppercase,
 700 weight, `0.2em` tracking, flat `0px`-radius buttons.
+
+### Dark mode
+
+Every original token keeps its name and its light value; the dark palette is a second block
+(`[data-theme="dark"]`) overriding the same names. **Change a colour in both blocks, or it
+only moves in one theme.**
+
+Two token groups exist only to make that possible:
+
+- `--fill` / `--fill-hover` / `--on-fill` — filled navy elements (primary button, avatar,
+  toast, today's date, active segment). `--navy` couldn't do this job any more: as a *text*
+  colour it has to go light in dark mode, but as a *background* it has to stay mid-tone with
+  white on top. In light mode `--fill` is exactly `--navy`, so nothing shifted.
+- `--card` — surfaces that used to be a hardcoded `#fff` and so had no way to follow a
+  theme. It's `#FFFFFF` in light. Same pixel, now themeable.
+
+Anything named `*-solid` is a background meant to carry text; the bare name (`--go`,
+`--risk`) is the text/accent colour.
+
+`index.html` runs a small inline script before the stylesheet paints, which reads
+`localStorage["ktp:theme"]` and sets `data-theme` on `<html>`. It's inline and first on
+purpose: a module script is deferred by definition, so doing this in `app.js` would show one
+frame of light theme before switching. No stored preference means follow the OS, and it keeps
+following it. Pressing the toggle (topbar on mobile, sidebar footer on desktop, top-right on
+the sign-in screen) stores an explicit choice that from then on outranks the OS.
 
 ---
 

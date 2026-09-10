@@ -98,8 +98,7 @@ function specRow(preset, current, isCustom = false) {
         <div class="spec-label">${esc(preset.label)}</div>
         <div class="spec-note">${esc(preset.hint || "")}</div>
         ${on ? `<input class="spec-note-input" placeholder="Add a detail (optional) — e.g. peanut allergy"
-                  value="${esc(current?.note || "")}" maxlength="200"
-                  style="margin-top:8px;width:100%;padding:8px 10px;border:1px solid var(--line-strong);font-size:14px" />` : ""}
+                  value="${esc(current?.note || "")}" maxlength="200" />` : ""}
       </div>
       <div class="spec-ctrl">
         <div class="vis-toggle" role="group" aria-label="Visibility">

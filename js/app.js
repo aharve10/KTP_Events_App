@@ -62,6 +62,52 @@ function showSetupGate() {
     </div>`;
 }
 
+/* --------------------------------- Theme --------------------------------- */
+
+const THEME_KEY = "ktp:theme";
+
+/**
+ * The inline script in index.html has already put the right value on <html>
+ * before first paint. This only handles the interactive half: filling the
+ * toggle buttons, flipping the preference, and following the OS for as long as
+ * nobody has expressed a preference of their own.
+ *
+ * Stored values are "light" / "dark" only. Absent means "follow the system",
+ * which is why the toggle stores rather than clears — once you've pressed it,
+ * your choice outranks the OS.
+ */
+function initTheme() {
+  const root = document.documentElement;
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  const icons = $("#tpl-theme-icons");
+  const buttons = $$("[data-theme-toggle]");
+
+  // localStorage throws outright in Safari private mode, so every touch of it
+  // is guarded — someone with site data locked down should still get the app.
+  const stored = () => { try { return localStorage.getItem(THEME_KEY); } catch { return null; } };
+
+  const apply = (pref) => {
+    const dark = pref === "dark" || (pref !== "light" && mq.matches);
+    root.dataset.theme = dark ? "dark" : "light";
+    buttons.forEach((b) => {
+      b.setAttribute("aria-pressed", String(dark));
+      b.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+    });
+  };
+
+  buttons.forEach((b) => {
+    if (icons) b.replaceChildren(icons.content.cloneNode(true));
+    b.addEventListener("click", () => {
+      const next = root.dataset.theme === "dark" ? "light" : "dark";
+      try { localStorage.setItem(THEME_KEY, next); } catch { /* just won't persist */ }
+      apply(next);
+    });
+  });
+
+  mq.addEventListener("change", () => { if (!stored()) apply(null); });
+  apply(stored());
+}
+
 /* --------------------------------- Auth --------------------------------- */
 
 let authMode = "signin";
@@ -169,8 +215,13 @@ function initShell() {
       const card = document.querySelector(`[data-event="${CSS.escape(id)}"]`);
       if (card) {
         card.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Read the ring off the theme instead of hardcoding navy, which is
+        // invisible on the dark palette. Resolved here because the Web
+        // Animations API takes computed values, not var() references.
+        const ring = getComputedStyle(document.documentElement)
+          .getPropertyValue("--focus-ring").trim() || "rgba(34,46,119,.45)";
         card.animate(
-          [{ boxShadow: "0 0 0 3px rgba(34,46,119,.45)" }, { boxShadow: "0 0 0 3px rgba(34,46,119,0)" }],
+          [{ boxShadow: `0 0 0 3px ${ring}` }, { boxShadow: "0 0 0 3px transparent" }],
           { duration: 1400, easing: "ease-out" }
         );
       } else {
@@ -242,6 +293,10 @@ function showApp() {
 }
 
 async function boot() {
+  // Ahead of the setup-gate check: the gate is a real screen too, and the
+  // toggle labels have to be right even when Firebase was never configured.
+  initTheme();
+
   if (!isConfigured) return showSetupGate();
 
   initAuth();
