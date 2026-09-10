@@ -85,14 +85,30 @@ export const HERO_IMAGES = [
  * Officer titles offered on the Profile page. Cosmetic only — the title you
  * pick is a label, not a permission. Officer access is the shared passcode,
  * so adding a title here doesn't grant anyone anything on its own.
- * Ordered chairs → directors → exec.
+ *
+ * Every filled position on the Fall 2026 org chart. Ordered chairs → directors
+ * → exec, alphabetical inside each tier, because this renders as one <select>
+ * and a dozen options are easier to scan grouped than in chart order.
+ *
+ * Dropping a title from this list is safe: it only controls what the dropdown
+ * offers when someone first claims officer access. A title already saved on a
+ * profile is stored text and keeps displaying either way — so the removed
+ * positions (Public Relations, NME, Tech Educator, Web Developer, Treasurer,
+ * Secretary, Historian, Scholarship) won't blank out anyone's existing badge.
+ * There's also an "Other" option appended in views/profile.js for anything
+ * that gets created mid-year before it lands here.
  */
 export const OFFICER_TITLES = [
+  "Alumni Relations Chair",
   "Brotherhood Chair",
+  "Community Service Chair",
+  "DEI Chair",
   "Philanthropy Chair",
-  "New Member Educator Chair",
+  "Sunshine Chair",
   "Director of Engagement",
   "Director of Membership",
+  "Director of Professional Development",
+  "Director of Technology",
   "Vice President",
   "President",
 ];
