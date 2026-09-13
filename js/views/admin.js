@@ -172,8 +172,6 @@ function officerList() {
   </div>
   <p class="field-help" style="margin-top:8px">
     Officer access is per-account, unlocked with the shared passcode on the Profile page.
-    Rotate the passcode by changing <span class="mono">config/officer.codeHash</span> in Firestore
-    (use <span class="mono">tools/passcode.html</span> to generate the new hash).
   </p>`;
 }
 

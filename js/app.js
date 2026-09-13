@@ -1,6 +1,6 @@
 /* ==========================================================================
-   App shell: setup gate → auth → router. Views are plain modules exporting
-   render() (returns HTML) and optionally mount(root, rerender).
+   App shell: auth → router. Views are plain modules exporting render()
+   (returns HTML) and optionally mount(root, rerender).
    ========================================================================== */
 
 import {
@@ -33,31 +33,19 @@ const currentRoute = () => {
   return ROUTES[key] ? key : "home";
 };
 
-/* ------------------------------- Setup gate ------------------------------- */
+/* ------------------------------- Unavailable ------------------------------- */
+/* Only reachable if the backend config has been cleared or corrupted. Shows a
+   generic "temporarily unavailable" message — never any internals. */
 
-function showSetupGate() {
+function showUnavailable() {
   $("#boot").hidden = true;
   const gate = $("#setup-gate");
   gate.hidden = false;
   gate.innerHTML = `
     <div class="gate-card">
-      <h1>One step left</h1>
-      <p class="page-sub" style="margin-bottom:18px">
-        The app is built and ready — it just needs your Firebase project so RSVPs are shared
-        across everyone instead of living in one browser.
-      </p>
-      <ol>
-        <li>Create a free project at <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a> (no card needed).</li>
-        <li><strong>Build → Authentication → Get started</strong>, enable <strong>Email/Password</strong>.</li>
-        <li><strong>Build → Firestore Database → Create database</strong>, production mode.</li>
-        <li><strong>Project settings → Your apps → Web (&lt;/&gt;)</strong> and copy the <code>firebaseConfig</code> values.</li>
-        <li>Paste them into <code>js/config.js</code>.</li>
-        <li>Copy <code>firestore.rules</code> into <strong>Firestore → Rules → Publish</strong>.</li>
-        <li>Open <a href="tools/passcode.html">tools/passcode.html</a>, hash your officer passcode, and save it
-            to Firestore as <code>config/officer</code> → field <code>codeHash</code>.</li>
-      </ol>
-      <p class="page-sub" style="margin-top:16px">
-        Full walkthrough, including deploying the shareable link, is in <code>README.md</code>.
+      <h1>KTP Events is temporarily unavailable</h1>
+      <p class="page-sub" style="margin-top:14px">
+        Try refreshing in a minute. If it stays down, message an officer.
       </p>
     </div>`;
 }
@@ -293,11 +281,9 @@ function showApp() {
 }
 
 async function boot() {
-  // Ahead of the setup-gate check: the gate is a real screen too, and the
-  // toggle labels have to be right even when Firebase was never configured.
   initTheme();
 
-  if (!isConfigured) return showSetupGate();
+  if (!isConfigured) return showUnavailable();
 
   initAuth();
   initModal();

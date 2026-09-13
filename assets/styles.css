@@ -314,16 +314,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .auth-theme { position: fixed; top: 14px; right: 14px; z-index: 1; }
 
-/* ============================ Setup gate ============================ */
+/* ============================ Fallback screen ============================ */
 .gate { min-height: 100dvh; display: grid; place-items: start center; padding: 40px 18px; background: var(--surface); }
 .gate-card { width: 100%; max-width: 640px; background: var(--card); border: 1px solid var(--line); padding: 32px; box-shadow: var(--shadow); }
 .gate-card h1 { font-size: 22px; margin-bottom: 6px; }
-.gate-card ol { padding-left: 20px; line-height: 1.7; font-size: 14px; }
-.gate-card code, .mono {
+.mono {
   font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
   font-size: .88em; background: var(--surface-2); padding: 1px 5px; border-radius: 2px;
 }
-.gate-card pre { background: var(--surface); border: 1px solid var(--line); padding: 14px; overflow-x: auto; font-size: 12px; line-height: 1.5; }
 
 /* ============================ Shell ============================ */
 .shell { min-height: 100dvh; }

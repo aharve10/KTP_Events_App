@@ -1,36 +1,9 @@
 /* ==========================================================================
-   CONFIG — this is the only file you need to edit to go live.
+   Chapter + Firebase configuration.
    ==========================================================================
-
-   The Firebase console reorganised its sidebar and there is no longer a "Build"
-   menu. Use the "Search for products" box at the top of the left sidebar to
-   reach Authentication and Firestore.
-
-   1. Go to https://console.firebase.google.com → Add project (free "Spark" plan
-      is enough — no credit card). Decline Google Analytics.
-      Note that Firebase appends a suffix, so the project ID below won't match
-      the name you type.
-   2. Search "Authentication" → Get started → Sign-in method → enable
-      "Email/Password". Leave "Email link (passwordless)" off.
-   3. Search "Firestore" → Create database → Production mode. Keep the database
-      ID as (default) and pick Firestore Native, not the MongoDB-compatible
-      option. Both are permanent once set.
-   4. Project settings (gear icon) → "Your apps" → Web (</>) → register the app.
-      Firebase shows you a `firebaseConfig` object. Copy those values below.
-      Ignore the npm and import lines it shows alongside them — js/firebase.js
-      already loads the SDK and is pinned to a version.
-   5. Paste the contents of firestore.rules into
-      Firestore Database → Rules → Publish. Allow a minute to propagate before
-      testing, or you'll chase a permission error that has already fixed itself.
-   6. Open tools/passcode.html, type your officer passcode, copy the hash, and
-      create a Firestore document `config/officer` with a single string field
-      `codeHash` set to that hash. Type the document ID by hand — the auto-ID
-      button gives you a random string, and the app looks for that exact path.
-   7. Deploy (see README.md) and add your live domain under
-      Authentication → Settings → Authorized domains. Domain only, no https://
-      and no path. Sign-in fails silently without this.
-
-   Full walkthrough with screenshots-worth-of-detail: README.md
+   The Firebase client config below is safe to expose — it identifies the
+   project to the browser SDK, not authenticates anything. Real access control
+   lives in firestore.rules.
    ========================================================================== */
 
 export const firebaseConfig = {
