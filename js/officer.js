@@ -150,6 +150,40 @@ export function eventForm(existing = null, onDone) {
         You can force it on or cancel it early at any point.
       </div>
 
+      <hr class="divider" />
+
+      <label class="check" style="margin-bottom:12px">
+        <input type="checkbox" name="featured" ${existing?.featured ? "checked" : ""} />
+        <span>
+          <strong>Feature on Home</strong>
+          <span class="field-help" style="display:block;margin-top:2px">
+            Pins this event to the hero at the top of the Home page. Only one event should be featured at a time; if two are, the soonest wins.
+          </span>
+        </span>
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">Target <span class="opt">(optional)</span></span>
+          <input name="target" type="number" min="0" max="500"
+                 value="${existing?.target ?? ""}" placeholder="e.g. 40" />
+          <span class="field-help">Aspirational count shown above the threshold — leave blank if you only care about the minimum.</span>
+        </label>
+        <label class="field">
+          <span class="field-label">Drivers needed <span class="opt">(optional)</span></span>
+          <input name="driversNeeded" type="number" min="0" max="30"
+                 value="${existing?.driversNeeded ?? ""}" placeholder="0 = none" />
+          <span class="field-help">For off-campus trips. Leave 0 to hide driver tracking.</span>
+        </label>
+      </div>
+
+      <label class="field" ${existing?.driversNeeded ? "" : "hidden"} data-drivers-signed>
+        <span class="field-label">Drivers signed up so far</span>
+        <input name="driversCount" type="number" min="0" max="30"
+               value="${existing?.driversCount ?? 0}" />
+        <span class="field-help">Bump this as people offer to drive. Falls back to 0 automatically.</span>
+      </label>
+
       <p class="auth-err" data-err hidden></p>
 
       <div class="modal-actions">
@@ -167,6 +201,13 @@ export function eventForm(existing = null, onDone) {
     if (deadlineTouched) return;
     const d = fromLocalInput(e.target.value);
     if (d) $("[name=decisionDeadline]", form).value = toLocalInput(addDays(d, -DEFAULTS.decisionLeadDays));
+  });
+
+  // Hide the "drivers signed up" field until the event actually needs drivers —
+  // no point asking for a count when the concept doesn't apply.
+  $("[name=driversNeeded]", form).addEventListener("input", (e) => {
+    const row = $("[data-drivers-signed]", form);
+    if (row) row.hidden = !(Number(e.target.value) > 0);
   });
 
   form.addEventListener("submit", async (e) => {
@@ -195,6 +236,13 @@ export function eventForm(existing = null, onDone) {
       threshold: fd.get("threshold"),
       decisionDeadline: dl,
       photoUrl: photo.value,
+      // Optional editorial + logistics fields — store.eventPayload defaults
+      // any blank/absent value back to the "unset" state so an event that
+      // doesn't opt in behaves exactly as it did before these fields existed.
+      featured: fd.get("featured") === "on",
+      target: fd.get("target"),
+      driversNeeded: fd.get("driversNeeded"),
+      driversCount: fd.get("driversCount"),
     };
 
     const submit = form.querySelector("button[type=submit]");

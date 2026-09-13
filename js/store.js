@@ -314,6 +314,16 @@ export async function loadRsvpsOnce(eventId) {
 /* ------------------------------- events ------------------------------- */
 
 function eventPayload(data) {
+  // All four "optional" fields below have safe absent-defaults: an event that
+  // doesn't set them looks and behaves exactly as it did before they existed.
+  //   featured       — undefined → falsy → home derives the hero automatically
+  //   target         — null → hide the aspirational "of X target" line
+  //   driversNeeded  — 0 → hide the driver row entirely
+  //   driversCount   — 0 → nobody signed up yet
+  const targetNum = Number(data.target);
+  const driversNeededNum = Number(data.driversNeeded);
+  const driversCountNum = Number(data.driversCount);
+
   return {
     title: String(data.title || "").trim().slice(0, 120),
     description: String(data.description || "").trim().slice(0, 1200),
@@ -326,6 +336,10 @@ function eventPayload(data) {
     // Belt and braces — the form validates first and refuses to submit a bad
     // one, so anything invalid reaching here is stored as "no photo".
     photoUrl: normalizePhotoUrl(data.photoUrl).value ?? null,
+    featured: data.featured === true,
+    target: Number.isFinite(targetNum) && targetNum > 0 ? Math.floor(targetNum) : null,
+    driversNeeded: Number.isFinite(driversNeededNum) && driversNeededNum > 0 ? Math.floor(driversNeededNum) : 0,
+    driversCount: Number.isFinite(driversCountNum) && driversCountNum >= 0 ? Math.floor(driversCountNum) : 0,
   };
 }
 
