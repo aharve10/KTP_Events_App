@@ -93,7 +93,7 @@ export function render() {
 
     ${heroBand(featured)}
 
-    ${atRisk.length ? attentionBand(atRisk[0], now) : ""}
+    ${atRisk.length ? attentionBand(atRisk, now) : ""}
 
     ${weekTimeline(upcoming, now)}
 
@@ -268,22 +268,46 @@ function headStats(upcoming, atRisk, now) {
    existing lifecycle computation — status.needed comes straight from
    computeStatus() so the count can't drift. */
 
-function attentionBand({ ev, status }, now) {
-  const start = toDate(ev.startAt);
-  const need  = status.needed === 1 ? "1 more RSVP" : `${status.needed} more RSVPs`;
-  const where = ev.location ? ` · ${ev.location}` : "";
-  // Countdown reads "in 3 hours", "tomorrow", "in 4 days" — same phrasing the
-  // banner used before. relative() handles the direction and unit for us.
-  const countdown = start ? ` · decide ${relative(start, now)}` : "";
+/* Attention section — surfaces EVERY at-risk event, not just the first, so
+   nothing that still needs action gets lost. Up to 6 rows on the band; anything
+   beyond that shows a "+ N more below" line and lives in the full list. */
+function attentionBand(atRiskList, now) {
+  const CAP = 6;
+  const shown = atRiskList.slice(0, CAP);
+  const overflow = Math.max(0, atRiskList.length - CAP);
+  const rows = shown.map(({ ev, status }) => {
+    const start = toDate(ev.startAt);
+    const need  = status.needed === 1 ? "1 more" : `${status.needed} more`;
+    const where = ev.location ? ` · ${ev.location}` : "";
+    const countdown = start ? ` · decide ${relative(start, now)}` : "";
+    return `
+      <div class="attention-row">
+        <div class="attention-row-body">
+          <div class="attention-row-title">
+            <strong>${esc(ev.title)}</strong>
+            <span class="attention-row-need">needs ${esc(need)}</span>
+          </div>
+          <div class="attention-row-meta">${esc(fmtDate(start))} · ${esc(fmtTime(start))}${esc(where)}${esc(countdown)}</div>
+        </div>
+        <button class="btn attention-cta" data-act="rsvp" data-id="${esc(ev.id)}" data-v="going">I'll be there</button>
+      </div>`;
+  }).join("");
+
+  const overflowLine = overflow
+    ? `<div class="attention-overflow">+ ${overflow} more at risk — see the full list below.</div>`
+    : "";
+
   return `
-    <section class="attention" aria-label="Needs your attention">
-      <div class="attention-icon" aria-hidden="true">!</div>
-      <div class="attention-body">
-        <div class="attention-label">Won't happen without you</div>
-        <div class="attention-title"><strong>${esc(ev.title)}</strong> needs ${esc(need)}</div>
-        <div class="attention-meta">${esc(fmtDate(start))} · ${esc(fmtTime(start))}${esc(where)}${esc(countdown)}</div>
-      </div>
-      <button class="btn attention-cta" data-act="rsvp" data-id="${esc(ev.id)}" data-v="going">I'll be there</button>
+    <section class="attention attention-stack" aria-label="Needs your attention">
+      <header class="attention-head">
+        <div class="attention-icon" aria-hidden="true">!</div>
+        <div>
+          <div class="attention-label">Won't happen without you</div>
+          <div class="attention-headline">${atRiskList.length === 1 ? "1 event needs" : `${atRiskList.length} events need`} more RSVPs to hit their threshold</div>
+        </div>
+      </header>
+      <div class="attention-rows">${rows}</div>
+      ${overflowLine}
     </section>`;
 }
 
