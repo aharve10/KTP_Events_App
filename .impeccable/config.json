@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "assets/styles.css"
+        ],
+        "createdAt": "2026-09-29T20:50:51.691Z",
+        "reason": "Claude triage: every border-left in styles.css is a 2px state marker (active nav link, calendar chip and week-timeline status), not a decorative card side-tab"
+      }
+    ]
+  }
+}
