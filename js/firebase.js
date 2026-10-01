@@ -7,6 +7,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/fireba
 import {
   getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
   signInWithEmailAndPassword, signOut, updateProfile, sendPasswordResetEmail,
+  sendEmailVerification, reload,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc,
@@ -32,7 +33,7 @@ export { app, auth, db };
 
 export {
   onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  signOut, updateProfile, sendPasswordResetEmail,
+  signOut, updateProfile, sendPasswordResetEmail, sendEmailVerification, reload,
   collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, where, orderBy, limit, serverTimestamp, Timestamp,
   runTransaction, increment, writeBatch, collectionGroup,

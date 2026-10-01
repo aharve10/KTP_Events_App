@@ -103,6 +103,34 @@
   </div>
 </div>
 
+<!-- ============ Email verification gate ============ -->
+<div id="verify-screen" class="auth" hidden>
+  <button class="icon-btn theme-btn auth-theme" data-theme-toggle aria-label="Switch theme"></button>
+
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-greek">ΚΘΠ</div>
+      <h1 class="auth-title">Verify your email</h1>
+      <p class="auth-sub">One-time check</p>
+    </div>
+
+    <p class="page-sub">
+      We need to confirm <strong id="verify-email"></strong> is yours before you can see chapter events.
+      Open the link in the verification email, then come back here.
+    </p>
+
+    <p class="auth-err" id="verify-err" role="alert" hidden></p>
+
+    <div class="auth-form" style="margin-top:18px">
+      <button type="button" class="btn btn-primary btn-block" id="verify-continue">I've verified — continue</button>
+      <button type="button" class="linkish" id="verify-send">Send verification email</button>
+      <button type="button" class="linkish" id="verify-signout">Sign out</button>
+    </div>
+
+    <p class="auth-foot">Can't find it? Check your junk folder.</p>
+  </div>
+</div>
+
 <!-- ============ App shell ============ -->
 <div id="app" class="shell" hidden>
 

@@ -194,16 +194,16 @@ export function eventCard(ev, opts = {}) {
   const canRsvp = !status.isPast && !dead;
   const rsvp = canRsvp ? `
     <div class="rsvp" role="group" aria-label="Your RSVP">
-      <button class="rsvp-btn ${mine === "going" ? "on-going" : ""}"    data-act="rsvp" data-id="${ev.id}" data-v="going">Going</button>
-      <button class="rsvp-btn ${mine === "deciding" ? "on-deciding" : ""}" data-act="rsvp" data-id="${ev.id}" data-v="deciding">Still deciding</button>
-      <button class="rsvp-btn ${mine === null ? "on-out" : ""}"          data-act="rsvp" data-id="${ev.id}" data-v="">Not going</button>
+      <button class="rsvp-btn ${mine === "going" ? "on-going" : ""}"    data-act="rsvp" data-id="${esc(ev.id)}" data-v="going">Going</button>
+      <button class="rsvp-btn ${mine === "deciding" ? "on-deciding" : ""}" data-act="rsvp" data-id="${esc(ev.id)}" data-v="deciding">Still deciding</button>
+      <button class="rsvp-btn ${mine === null ? "on-out" : ""}"          data-act="rsvp" data-id="${esc(ev.id)}" data-v="">Not going</button>
     </div>` : "";
 
   /* --- roster -------------------------------------------------------- */
   let roster = "";
   if (expanded) {
     if (!live && status.isPast) {
-      roster = `<button class="disclosure" data-act="load-rsvps" data-id="${ev.id}">
+      roster = `<button class="disclosure" data-act="load-rsvps" data-id="${esc(ev.id)}">
         Show who RSVP'd (${counts.going} going, ${counts.deciding} deciding)</button>`;
     } else {
       roster = `
@@ -220,7 +220,7 @@ export function eventCard(ev, opts = {}) {
         </div>`;
     }
   } else {
-    roster = `<button class="disclosure" data-act="expand" data-id="${ev.id}">
+    roster = `<button class="disclosure" data-act="expand" data-id="${esc(ev.id)}">
       Show who's going (${counts.going} going · ${counts.deciding} deciding)</button>`;
   }
 
@@ -237,7 +237,7 @@ export function eventCard(ev, opts = {}) {
     </div>` : "";
 
   return `
-  <article class="card ${status.key === S.AT_RISK ? "is-risk" : ""} ${dead ? "is-dead" : ""}" data-event="${ev.id}">
+  <article class="card ${status.key === S.AT_RISK ? "is-risk" : ""} ${dead ? "is-dead" : ""}" data-event="${esc(ev.id)}">
     ${cardPhoto(ev)}
     <div class="card-top">
       ${chip}
@@ -277,15 +277,15 @@ function attendanceBlock(ev, going) {
 function officerActions(ev, status) {
   const b = [];
   if (status.isPast) {
-    b.push(`<button class="btn btn-ghost btn-sm" data-act="turnout" data-id="${ev.id}">Mark turnout</button>`);
-    b.push(`<button class="btn btn-ghost btn-sm" data-act="outcome" data-id="${ev.id}">Set outcome</button>`);
+    b.push(`<button class="btn btn-ghost btn-sm" data-act="turnout" data-id="${esc(ev.id)}">Mark turnout</button>`);
+    b.push(`<button class="btn btn-ghost btn-sm" data-act="outcome" data-id="${esc(ev.id)}">Set outcome</button>`);
   } else {
-    if (!status.forced) b.push(`<button class="btn btn-ghost btn-sm" data-act="force" data-id="${ev.id}">Force on</button>`);
-    else b.push(`<button class="btn btn-ghost btn-sm" data-act="unforce" data-id="${ev.id}">Undo force</button>`);
-    b.push(`<button class="btn btn-ghost btn-sm" data-act="extend" data-id="${ev.id}">Extend deadline</button>`);
-    b.push(`<button class="btn btn-ghost btn-sm" data-act="edit" data-id="${ev.id}">Edit</button>`);
-    if (!status.killed) b.push(`<button class="btn btn-danger btn-sm" data-act="kill" data-id="${ev.id}">Cancel</button>`);
-    else b.push(`<button class="btn btn-ghost btn-sm" data-act="revive" data-id="${ev.id}">Un-cancel</button>`);
+    if (!status.forced) b.push(`<button class="btn btn-ghost btn-sm" data-act="force" data-id="${esc(ev.id)}">Force on</button>`);
+    else b.push(`<button class="btn btn-ghost btn-sm" data-act="unforce" data-id="${esc(ev.id)}">Undo force</button>`);
+    b.push(`<button class="btn btn-ghost btn-sm" data-act="extend" data-id="${esc(ev.id)}">Extend deadline</button>`);
+    b.push(`<button class="btn btn-ghost btn-sm" data-act="edit" data-id="${esc(ev.id)}">Edit</button>`);
+    if (!status.killed) b.push(`<button class="btn btn-danger btn-sm" data-act="kill" data-id="${esc(ev.id)}">Cancel</button>`);
+    else b.push(`<button class="btn btn-ghost btn-sm" data-act="revive" data-id="${esc(ev.id)}">Un-cancel</button>`);
   }
   return b.join("");
 }

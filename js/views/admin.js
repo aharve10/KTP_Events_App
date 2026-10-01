@@ -116,7 +116,7 @@ function turnoutRow(ev) {
         <div class="card-title" style="font-size:15px">${esc(ev.title)}</div>
         <div class="card-meta">${esc(fmtDateTime(toDate(ev.startAt)))} · ${c.going} RSVP'd</div>
       </div>
-      <button class="btn btn-ghost btn-sm" data-act="turnout" data-id="${ev.id}">Mark turnout</button>
+      <button class="btn btn-ghost btn-sm" data-act="turnout" data-id="${esc(ev.id)}">Mark turnout</button>
     </div>`;
 }
 
@@ -144,10 +144,10 @@ function seriesRow(s) {
           </div>
         </div>
         <div class="card-actions">
-          <button class="btn btn-ghost btn-sm" data-series="edit"  data-id="${s.id}">Edit</button>
-          <button class="btn btn-ghost btn-sm" data-series="pause" data-id="${s.id}">${s.paused ? "Resume" : "Pause"}</button>
-          ${!done ? `<button class="btn btn-ghost btn-sm" data-series="end" data-id="${s.id}">End series</button>` : ""}
-          <button class="btn btn-danger btn-sm" data-series="delete" data-id="${s.id}">Delete</button>
+          <button class="btn btn-ghost btn-sm" data-series="edit"  data-id="${esc(s.id)}">Edit</button>
+          <button class="btn btn-ghost btn-sm" data-series="pause" data-id="${esc(s.id)}">${s.paused ? "Resume" : "Pause"}</button>
+          ${!done ? `<button class="btn btn-ghost btn-sm" data-series="end" data-id="${esc(s.id)}">End series</button>` : ""}
+          <button class="btn btn-danger btn-sm" data-series="delete" data-id="${esc(s.id)}">Delete</button>
         </div>
       </div>
       <p class="planning-note" style="margin-top:10px">

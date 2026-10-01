@@ -6,7 +6,7 @@
 import {
   isConfigured, auth, onAuthStateChanged, createUserWithEmailAndPassword,
   signInWithEmailAndPassword, signOut, updateProfile, sendPasswordResetEmail,
-  friendlyError,
+  sendEmailVerification, reload, friendlyError,
 } from "./firebase.js";
 import { ALLOWED_EMAIL_DOMAINS } from "./config.js";
 import { $, $$, esc, initials, toast, debounce } from "./util.js";
@@ -143,6 +143,13 @@ function initAuth() {
       if (authMode === "signup") {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(cred.user, { displayName: name });
+        // Rules refuse unverified accounts, so the verify screen is the next stop.
+        try {
+          await sendEmailVerification(cred.user);
+          sessionStorage.setItem("ktp:verifySent", "1");
+          // onAuthStateChanged has usually painted the verify screen already.
+          $("#verify-send").textContent = "Resend verification email";
+        } catch (ex) { console.warn("verification email failed", ex); }
         if (fd.get("gradYear")) sessionStorage.setItem("ktp:gradYear", String(fd.get("gradYear")));
       } else {
         await signInWithEmailAndPassword(auth, email, password);
@@ -267,6 +274,7 @@ const rerenderSoon = debounce(() => rerender(), 40);
 function showAuth() {
   $("#boot").hidden = true;
   $("#app").hidden = true;
+  $("#verify-screen").hidden = true;
   $("#auth-screen").hidden = false;
   closeModal();
   const btn = $("#auth-submit");
@@ -277,7 +285,103 @@ function showAuth() {
 function showApp() {
   $("#boot").hidden = true;
   $("#auth-screen").hidden = true;
+  $("#verify-screen").hidden = true;
   $("#app").hidden = false;
+}
+
+/* --------------------------- Email verification --------------------------- */
+/* firestore.rules only admit accounts with email_verified, so an unverified
+   user never gets as far as store.start() — they'd just hit permission-denied. */
+
+function showVerify(user) {
+  $("#boot").hidden = true;
+  $("#app").hidden = true;
+  $("#auth-screen").hidden = true;
+  $("#verify-screen").hidden = false;
+  closeModal();
+  $("#verify-email").textContent = user.email || "your email";
+  $("#verify-err").hidden = true;
+  const sent = sessionStorage.getItem("ktp:verifySent");
+  $("#verify-send").textContent = sent ? "Resend verification email" : "Send verification email";
+}
+
+function initVerify() {
+  const err = $("#verify-err");
+  const fail = (msg) => { err.textContent = msg; err.hidden = false; };
+
+  $("#verify-continue").addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    const user = auth.currentUser;
+    if (!user) return;
+    err.hidden = true;
+    btn.disabled = true;
+    try {
+      await reload(user);
+      if (!user.emailVerified) {
+        return fail("Not verified yet — open the link in the email first. It can take a minute to arrive.");
+      }
+      // The cached ID token still says email_verified: false, and rules read the token.
+      await user.getIdToken(true);
+      await enterApp(user);
+    } catch (ex) {
+      fail(friendlyError(ex));
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("#verify-send").addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    const user = auth.currentUser;
+    if (!user) return;
+    err.hidden = true;
+    btn.disabled = true;
+    try {
+      await sendEmailVerification(user);
+      sessionStorage.setItem("ktp:verifySent", "1");
+      btn.textContent = "Resend verification email";
+      toast(`Verification email sent to ${user.email}.`);
+    } catch (ex) {
+      fail(friendlyError(ex));
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("#verify-signout").addEventListener("click", async () => {
+    try { await signOut(auth); } catch { toast("Couldn't sign out.", "err"); }
+  });
+}
+
+async function enterApp(user) {
+  $("#verify-screen").hidden = true;
+  $("#boot").hidden = false;
+  $(".boot-msg").textContent = "Loading chapter data…";
+
+  try {
+    await store.start(user);
+  } catch (e) {
+    console.error("startup failed", e);
+    $(".boot-msg").textContent = "Couldn't load. Check Firestore rules.";
+    toast(friendlyError(e), "err");
+    return;
+  }
+
+  // Grad year captured at signup, applied once the profile doc exists.
+  const pending = sessionStorage.getItem("ktp:gradYear");
+  if (pending && store.state.profile && !store.state.profile.gradYear) {
+    sessionStorage.removeItem("ktp:gradYear");
+    store.saveProfileBasics({
+      displayName: store.state.profile.displayName || user.displayName || "",
+      gradYear: pending,
+    }).catch(() => {});
+  }
+
+  initShell();
+  if (!location.hash) location.hash = "#/home";
+  showApp();
+  rerender(true);
+  store.subscribe(rerenderSoon);
 }
 
 async function boot() {
@@ -286,6 +390,7 @@ async function boot() {
   if (!isConfigured) return showUnavailable();
 
   initAuth();
+  initVerify();
   initModal();
 
   onAuthStateChanged(auth, async (user) => {
@@ -294,34 +399,12 @@ async function boot() {
       showAuth();
       return;
     }
-
-    $("#boot").hidden = false;
-    $(".boot-msg").textContent = "Loading chapter data…";
-
-    try {
-      await store.start(user);
-    } catch (e) {
-      console.error("startup failed", e);
-      $(".boot-msg").textContent = "Couldn't load. Check Firestore rules.";
-      toast(friendlyError(e), "err");
+    if (!user.emailVerified) {
+      store.teardown();
+      showVerify(user);
       return;
     }
-
-    // Grad year captured at signup, applied once the profile doc exists.
-    const pending = sessionStorage.getItem("ktp:gradYear");
-    if (pending && store.state.profile && !store.state.profile.gradYear) {
-      sessionStorage.removeItem("ktp:gradYear");
-      store.saveProfileBasics({
-        displayName: store.state.profile.displayName || user.displayName || "",
-        gradYear: pending,
-      }).catch(() => {});
-    }
-
-    initShell();
-    if (!location.hash) location.hash = "#/home";
-    showApp();
-    rerender(true);
-    store.subscribe(rerenderSoon);
+    await enterApp(user);
   });
 }
 

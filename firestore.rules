@@ -4,7 +4,7 @@ rules_version = '2';
    KTP Events — Firestore security rules.
 
    What these enforce:
-     • Only @syr.edu / @g.syr.edu accounts can read or write anything.
+     • Only verified @syr.edu / @g.syr.edu accounts can read or write anything.
      • Officer status is gated on a SHA-256 passcode check against a document
        no client can read.
      • Private profile specs stay private; only the "shown" ones surface on
@@ -26,8 +26,12 @@ service cloud.firestore {
 
     // Chapter gate. Keep in sync with ALLOWED_EMAIL_DOMAINS in js/config.js.
     // To allow any email address, replace the body with `return signedIn();`.
+    // email_verified matters: without it anyone can register an @syr.edu
+    // address they don't own and pass the domain check.
     function isMember() {
-      return signedIn() && request.auth.token.email.matches('^[^@]+@(g[.])?syr[.]edu$');
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.matches('^[^@]+@(g[.])?syr[.]edu$');
     }
 
     function isOfficer() {
@@ -102,9 +106,14 @@ service cloud.firestore {
 
       // A member's browser may materialise the next occurrence of an active
       // series, but only as a faithful copy of the template with no RSVPs.
+      // The doc ID must be the deterministic s-<seriesId>-<yyyymmdd> the client
+      // generates (store.js ensureSeriesInstances). Left unconstrained, a member
+      // could pick an ID containing markup.
       function validSeriesInstance() {
         return isMember()
           && request.resource.data.seriesId is string
+          && request.resource.data.seriesId.matches('^[A-Za-z0-9]+$')
+          && eventId.matches('^s-' + request.resource.data.seriesId + '-[0-9]{8}$')
           && exists(/databases/$(database)/documents/series/$(request.resource.data.seriesId))
           && template(request.resource.data.seriesId).paused == false
           && request.resource.data.title     == template(request.resource.data.seriesId).title
@@ -135,7 +144,10 @@ service cloud.firestore {
       }
 
       allow read:   if isMember();
-      allow create: if isOfficer() || validSeriesInstance();
+      // Officers too: one-off events use auto-IDs, instances use the pattern
+      // above, so nothing legitimate needs characters outside this set.
+      allow create: if eventId.matches('^[A-Za-z0-9_-]{1,100}$')
+                    && (isOfficer() || validSeriesInstance());
       allow update: if isOfficer() || (isMember() && countsOnly());
       allow delete: if isOfficer();
 
