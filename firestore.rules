@@ -25,7 +25,6 @@ service cloud.firestore {
     }
 
     // Chapter gate. Keep in sync with ALLOWED_EMAIL_DOMAINS in js/config.js.
-    // To allow any email address, replace the body with `return signedIn();`.
     // email_verified matters: without it anyone can register an @syr.edu
     // address they don't own and pass the domain check.
     function isMember() {
