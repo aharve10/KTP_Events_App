@@ -149,7 +149,14 @@ function initAuth() {
           sessionStorage.setItem("ktp:verifySent", "1");
           // onAuthStateChanged has usually painted the verify screen already.
           $("#verify-send").textContent = "Resend verification email";
-        } catch (ex) { console.warn("verification email failed", ex); }
+        } catch (ex) {
+          // Don't swallow this — otherwise the screen says "Resend" for an email that never went out.
+          console.warn("verification email failed", ex);
+          sessionStorage.removeItem("ktp:verifySent");
+          $("#verify-send").textContent = "Send verification email";
+          $("#verify-err").textContent = `Couldn't send the verification email: ${friendlyError(ex)}`;
+          $("#verify-err").hidden = false;
+        }
         if (fd.get("gradYear")) sessionStorage.setItem("ktp:gradYear", String(fd.get("gradYear")));
       } else {
         await signInWithEmailAndPassword(auth, email, password);
