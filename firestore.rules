@@ -50,6 +50,57 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
+    /* --- RSVP tallies ---
+       events.counts is a denormalised count of the rsvps subcollection. A
+       member's change to the counts and to their own RSVP must land in the
+       same transaction (store.js setRsvp) and agree with each other; checked
+       from both documents' sides, so neither can be written alone. Without
+       this, +1 on counts could be repeated forever, or an RSVP deleted
+       without the matching -1 and re-created for another +1. */
+
+    function eventDoc(eid) {
+      return /databases/$(database)/documents/events/$(eid);
+    }
+
+    function myRsvpDoc(eid) {
+      return /databases/$(database)/documents/events/$(eid)/rsvps/$(request.auth.uid);
+    }
+
+    function rsvpBefore(eid) {
+      return exists(myRsvpDoc(eid)) ? get(myRsvpDoc(eid)).data.status : null;
+    }
+
+    function rsvpAfter(eid) {
+      return existsAfter(myRsvpDoc(eid)) ? getAfter(myRsvpDoc(eid)).data.status : null;
+    }
+
+    function one(status, key) {
+      return status == key ? 1 : 0;
+    }
+
+    function tallyMatchesMyRsvp(eid) {
+      let before = get(eventDoc(eid)).data.counts;
+      let after = getAfter(eventDoc(eid)).data.counts;
+      let prev = rsvpBefore(eid);
+      let next = rsvpAfter(eid);
+      return prev != next
+        && after.keys().hasOnly(['going', 'deciding'])
+        && after.going == before.going + one(next, 'going') - one(prev, 'going')
+        && after.deciding == before.deciding + one(next, 'deciding') - one(prev, 'deciding');
+    }
+
+    /* --- Series instance dates ---
+       store.js keys instances by the creating browser's local date, which can
+       be a day either side of the UTC date of startAt. */
+
+    function pad2(n) {
+      return (n < 10 ? '0' : '') + string(n);
+    }
+
+    function ymd(t) {
+      return string(t.year()) + pad2(t.month()) + pad2(t.day());
+    }
+
     /* ------------------------- config: server-side only ------------------------ */
     /* Holds the officer passcode hash. get() inside rules bypasses these rules,
        so the comparison below still works while clients see nothing. */
@@ -109,11 +160,40 @@ service cloud.firestore {
       // generates (store.js ensureSeriesInstances). Left unconstrained, a member
       // could pick an ID containing markup.
       function validSeriesInstance() {
+        let d = request.resource.data;
+        let day = duration.value(1, 'd');
         return isMember()
-          && request.resource.data.seriesId is string
-          && request.resource.data.seriesId.matches('^[A-Za-z0-9]+$')
-          && eventId.matches('^s-' + request.resource.data.seriesId + '-[0-9]{8}$')
+          && d.seriesId is string
+          && d.seriesId.matches('^[A-Za-z0-9]+$')
+          && eventId.matches('^s-' + d.seriesId + '-[0-9]{8}$')
+          // Exactly the fields ensureSeriesInstances() writes — no featured,
+          // target, drivers or anything else riding along.
+          && d.keys().hasOnly(['title', 'description', 'location', 'category',
+               'startAt', 'endAt', 'threshold', 'decisionDeadline', 'photoUrl',
+               'seriesId', 'override', 'outcome', 'outcomeNote', 'counts',
+               'attendance', 'createdBy', 'createdByName', 'createdAt', 'updatedAt'])
+          && d.startAt is timestamp
+          && d.endAt is timestamp
+          && d.decisionDeadline is timestamp
+          // The date in the ID has to be this instance's own date, so nobody can
+          // park a doc on a future date and block the real one from generating.
+          && eventId in ['s-' + d.seriesId + '-' + ymd(d.startAt),
+                         's-' + d.seriesId + '-' + ymd(d.startAt - day),
+                         's-' + d.seriesId + '-' + ymd(d.startAt + day)]
+          // Generation looks from today to seriesHorizonDays (35, js/config.js)
+          // ahead; two days' slack either side.
+          && d.startAt > request.time - day
+          && d.startAt < request.time + duration.value(37, 'd')
+          && d.endAt > d.startAt
+          && d.decisionDeadline <= d.startAt
+          && d.createdAt == request.time
+          && d.updatedAt == request.time
+          && d.outcomeNote == ''
+          && d.counts.keys().hasOnly(['going', 'deciding'])
           && exists(/databases/$(database)/documents/series/$(request.resource.data.seriesId))
+          && d.description == template(d.seriesId).get('description', '')
+          && d.createdBy == template(d.seriesId).get('createdBy', request.auth.uid)
+          && d.createdByName == template(d.seriesId).get('createdByName', '')
           && template(request.resource.data.seriesId).paused == false
           && request.resource.data.title     == template(request.resource.data.seriesId).title
           && request.resource.data.location  == template(request.resource.data.seriesId).location
@@ -132,14 +212,13 @@ service cloud.firestore {
           && request.resource.data.counts.deciding == 0;
       }
 
-      // Members may only touch the denormalised RSVP tallies, by at most one at
-      // a time, and never below zero.
+      // Members may only touch the denormalised RSVP tallies, never below zero,
+      // and only alongside the matching change to their own RSVP.
       function countsOnly() {
         return changedKeys().hasOnly(['counts'])
           && request.resource.data.counts.going >= 0
           && request.resource.data.counts.deciding >= 0
-          && math.abs(request.resource.data.counts.going - resource.data.counts.going) <= 1
-          && math.abs(request.resource.data.counts.deciding - resource.data.counts.deciding) <= 1;
+          && tallyMatchesMyRsvp(eventId);
       }
 
       allow read:   if isMember();
@@ -159,10 +238,16 @@ service cloud.firestore {
 
         allow create, update: if isMember()
                               && request.auth.uid == uid
+                              && request.resource.data.keys().hasOnly(['uid', 'status', 'updatedAt'])
                               && request.resource.data.uid == uid
-                              && request.resource.data.status in ['going', 'deciding'];
+                              && request.resource.data.status in ['going', 'deciding']
+                              && request.resource.data.updatedAt == request.time
+                              && tallyMatchesMyRsvp(eventId);
 
-        allow delete: if isMember() && (request.auth.uid == uid || isOfficer());
+        // Officers clear RSVPs wholesale when deleting an event (deleteEvent),
+        // so theirs skips the tally check.
+        allow delete: if isOfficer()
+                      || (isMember() && request.auth.uid == uid && tallyMatchesMyRsvp(eventId));
       }
     }
 
