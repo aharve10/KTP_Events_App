@@ -6,9 +6,10 @@
 import {
   isConfigured, auth, onAuthStateChanged, createUserWithEmailAndPassword,
   signInWithEmailAndPassword, signOut, updateProfile, sendPasswordResetEmail,
-  sendEmailVerification, reload, friendlyError,
+  sendEmailVerification, reload, applyActionCode, checkActionCode,
+  verifyPasswordResetCode, confirmPasswordReset, friendlyError,
 } from "./firebase.js";
-import { ALLOWED_EMAIL_DOMAINS } from "./config.js";
+import { ALLOWED_EMAIL_DOMAINS, firebaseConfig } from "./config.js";
 import { $, $$, esc, initials, toast, debounce } from "./util.js";
 import * as store from "./store.js";
 import { initModal, bindCardActions, closeModal } from "./components.js";
@@ -310,6 +311,37 @@ function showVerify(user) {
   $("#verify-err").hidden = true;
   const sent = sessionStorage.getItem("ktp:verifySent");
   $("#verify-send").textContent = sent ? "Resend verification email" : "Send verification email";
+  fillMailLinks(user.email || "");
+}
+
+/** Firebase sends from noreply@<authDomain> unless a custom sender is set up. */
+const SENDER = `noreply@${firebaseConfig.authDomain}`;
+
+/**
+ * Point the verify screen at wherever this person's mail actually lives.
+ * syr.edu is Microsoft 365, where the filter's quarantine is the usual
+ * hiding place; g.syr.edu is Google Workspace.
+ */
+function fillMailLinks(email) {
+  const domain = email.split("@")[1] || "";
+  const link = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${text}</a>`;
+  const inbox = $("#verify-inbox");
+  const more = $("#verify-more");
+  $("#verify-sender").textContent = SENDER;
+
+  if (domain === "g.syr.edu") {
+    const search = encodeURIComponent(`from:${SENDER} in:anywhere`);
+    inbox.href = `https://mail.google.com/mail/u/0/#search/${search}`;
+    inbox.textContent = "Find it in Gmail";
+    more.innerHTML = link("https://mail.google.com/mail/u/0/#spam", "Spam folder");
+  } else {
+    inbox.href = "https://outlook.office.com/mail/inbox";
+    inbox.textContent = "Open Outlook";
+    more.innerHTML = [
+      link("https://outlook.office.com/mail/junkemail", "Junk folder"),
+      link("https://security.microsoft.com/quarantine", "Quarantine"),
+    ].join('<span class="sep" aria-hidden="true">·</span>');
+  }
 }
 
 function initVerify() {
@@ -360,6 +392,145 @@ function initVerify() {
   });
 }
 
+/* ----------------------------- Email link handler ----------------------------- */
+/* Firebase's emailed links land here once the console's action URL points at
+   this app. A link scanner may load this page, so nothing is applied until
+   someone presses the button. */
+
+function readActionLink() {
+  const q = new URLSearchParams(location.search);
+  const mode = q.get("mode");
+  const code = q.get("oobCode");
+  return mode && code ? { mode, code } : null;
+}
+
+/** Drop the one-time code from the address bar so it isn't bookmarked or shared. */
+function clearActionLink() {
+  const url = new URL(location.href);
+  ["mode", "oobCode", "apiKey", "lang", "continueUrl", "tenantId"].forEach((k) => url.searchParams.delete(k));
+  history.replaceState(null, "", url.pathname + url.search + url.hash);
+}
+
+function showAction() {
+  $("#boot").hidden = true;
+  $("#app").hidden = true;
+  $("#auth-screen").hidden = true;
+  $("#verify-screen").hidden = true;
+  $("#action-screen").hidden = false;
+}
+
+/** Resolves once the person is done with the link and the normal app can start. */
+function handleActionLink({ mode, code }) {
+  return new Promise((resolve) => {
+    const title = $("#action-title");
+    const body = $("#action-body");
+    const err = $("#action-err");
+    const form = $("#action-form");
+    const pwField = $("#action-pw");
+    const submit = $("#action-submit");
+    const done = $("#action-done");
+
+    const fail = (msg) => { err.textContent = msg; err.hidden = false; };
+    const finish = (heading, text) => {
+      title.textContent = heading;
+      body.textContent = text;
+      form.hidden = true;
+      done.hidden = false;
+      done.focus();
+    };
+    const broken = (ex) => {
+      title.textContent = "Link didn't work";
+      fail(friendlyError(ex));
+      done.hidden = false;
+    };
+    done.addEventListener("click", () => {
+      clearActionLink();
+      $("#action-screen").hidden = true;
+      resolve();
+    });
+
+    showAction();
+
+    if (mode === "verifyEmail") {
+      title.textContent = "Confirm your email";
+      checkActionCode(auth, code).then((info) => {
+        body.textContent = `Press the button to confirm ${info.data.email || "your email"} belongs to you.`;
+        submit.textContent = "Confirm my email";
+        form.hidden = false;
+      }).catch(broken);
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        err.hidden = true;
+        submit.disabled = true;
+        try {
+          await applyActionCode(auth, code);
+          // If this browser is the one that signed up, refresh its token so the
+          // rules see email_verified straight away.
+          if (auth.currentUser) {
+            await reload(auth.currentUser);
+            await auth.currentUser.getIdToken(true);
+          }
+          finish("Email confirmed", "You're verified. Continue to see chapter events.");
+        } catch (ex) {
+          fail(friendlyError(ex));
+          submit.disabled = false;
+        }
+      });
+    } else if (mode === "resetPassword") {
+      title.textContent = "Choose a new password";
+      verifyPasswordResetCode(auth, code).then((email) => {
+        body.textContent = `For ${email}.`;
+        pwField.hidden = false;
+        submit.textContent = "Save new password";
+        form.hidden = false;
+        $("input", pwField).focus();
+      }).catch(broken);
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        err.hidden = true;
+        const password = String(new FormData(form).get("password") || "");
+        if (password.length < 6) return fail("Password needs to be at least 6 characters.");
+        submit.disabled = true;
+        try {
+          await confirmPasswordReset(auth, code, password);
+          finish("Password updated", "Sign in with your new password.");
+        } catch (ex) {
+          fail(friendlyError(ex));
+          submit.disabled = false;
+        }
+      });
+    } else {
+      title.textContent = "Link not supported";
+      body.textContent = "This app doesn't handle that kind of email link.";
+      done.hidden = false;
+    }
+  });
+}
+
+/* ------------------------------ Stale-code check ------------------------------ */
+/* GitHub Pages lets browsers reuse files for 10 minutes, so right after a
+   deploy a refresh can still run the old code. version.json is fetched past
+   every cache; if it's ahead of the version this page was built with, reload
+   onto a URL the browser hasn't cached. scripts/stamp.mjs writes both. */
+
+async function ensureFreshCode() {
+  const built = document.querySelector('meta[name="app-version"]')?.content;
+  if (!built) return;
+  try {
+    const res = await fetch("version.json", { cache: "no-store" });
+    if (!res.ok) return;
+    const { version } = await res.json();
+    if (!version || version === built) return;
+    const url = new URL(location.href);
+    if (url.searchParams.get("v") === version) return; // already tried once; don't loop
+    url.searchParams.set("v", version); // other params, like an oobCode, ride along
+    location.replace(url.toString());
+    await new Promise(() => {}); // hold here while the page navigates away
+  } catch { /* offline or blocked — run what we have */ }
+}
+
 async function enterApp(user) {
   $("#verify-screen").hidden = true;
   $("#boot").hidden = false;
@@ -393,12 +564,16 @@ async function enterApp(user) {
 
 async function boot() {
   initTheme();
+  await ensureFreshCode();
 
   if (!isConfigured) return showUnavailable();
 
   initAuth();
   initVerify();
   initModal();
+
+  const action = readActionLink();
+  if (action) await handleActionLink(action);
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {

@@ -8,6 +8,30 @@
 <meta name="theme-color" content="#0C1220" media="(prefers-color-scheme: dark)" />
 <meta name="description" content="Kappa Theta Pi at Syracuse University — brotherhood & social event RSVPs." />
 <title>KTP Events — Kappa Theta Pi at Syracuse</title>
+<meta name="app-version" content="3604f0451c" />
+
+<!-- stamp:importmap (written by scripts/stamp.mjs — don't edit by hand) -->
+<script type="importmap">
+{
+  "imports": {
+    "./js/app.js": "./js/app.js?v=211a05807b",
+    "./js/components.js": "./js/components.js?v=84e218bc35",
+    "./js/config.js": "./js/config.js?v=ceff422dc1",
+    "./js/firebase.js": "./js/firebase.js?v=62e23cca69",
+    "./js/lifecycle.js": "./js/lifecycle.js?v=a2fe374aa0",
+    "./js/officer.js": "./js/officer.js?v=95a9dd7592",
+    "./js/seed.js": "./js/seed.js?v=10322f25c0",
+    "./js/store.js": "./js/store.js?v=89382b5d96",
+    "./js/util.js": "./js/util.js?v=a74565dfd5",
+    "./js/views/admin.js": "./js/views/admin.js?v=2bd7995ee4",
+    "./js/views/calendar.js": "./js/views/calendar.js?v=8155615153",
+    "./js/views/home.js": "./js/views/home.js?v=2115c96e04",
+    "./js/views/past.js": "./js/views/past.js?v=bf936ea246",
+    "./js/views/profile.js": "./js/views/profile.js?v=7739a0d7a8"
+  }
+}
+</script>
+<!-- /stamp:importmap -->
 
 <!-- Resolve the theme before the stylesheet paints. Doing this in app.js
      instead would flash light for one frame, because a module script is
@@ -29,7 +53,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..700,0..100;1,9..144,300..600,0..100&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css" />
+<link rel="stylesheet" href="assets/styles.css?v=7aa716edc4" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23081359'/%3E%3Ctext x='16' y='22' font-family='Helvetica,Arial' font-size='15' font-weight='bold' fill='%23fff' text-anchor='middle'%3EKTP%3C/text%3E%3C/svg%3E" />
 </head>
 <body>
@@ -124,10 +148,51 @@
     <div class="auth-form" style="margin-top:18px">
       <button type="button" class="btn btn-primary btn-block" id="verify-continue">I've verified — continue</button>
       <button type="button" class="linkish" id="verify-send">Send verification email</button>
-      <button type="button" class="linkish" id="verify-signout">Sign out</button>
     </div>
 
-    <p class="auth-foot">Can't find it? It comes from noreply@ktp-project-44937.firebaseapp.com — check junk, and Syracuse's Microsoft quarantine (security.microsoft.com/quarantine).</p>
+    <!-- Filled by app.js from the account's domain: Outlook for syr.edu, Gmail for g.syr.edu. -->
+    <div class="verify-mail" id="verify-mail">
+      <a class="btn btn-ghost btn-block" id="verify-inbox" target="_blank" rel="noopener">Open my inbox</a>
+      <p class="verify-mail-more" id="verify-more"></p>
+    </div>
+
+    <p class="auth-foot">
+      It comes from <strong id="verify-sender"></strong>. Syracuse's email filter sometimes holds it
+      in Junk or Quarantine — the links above open both.
+    </p>
+
+    <button type="button" class="linkish verify-signout" id="verify-signout">Sign out</button>
+  </div>
+</div>
+
+<!-- ============ Email link handler ============
+     Firebase's emailed links (verify email, reset password) land here instead of
+     Firebase's default page. Nothing happens until a person presses the button:
+     Outlook's link scanner opens every link in incoming mail, and the default
+     page would verify the account the moment the scanner loaded it. -->
+<div id="action-screen" class="auth" hidden>
+  <button class="icon-btn theme-btn auth-theme" data-theme-toggle aria-label="Switch theme"></button>
+
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-greek">ΚΘΠ</div>
+      <h1 class="auth-title" id="action-title">Checking link…</h1>
+      <p class="auth-sub" id="action-sub"></p>
+    </div>
+
+    <p class="page-sub" id="action-body"></p>
+
+    <p class="auth-err" id="action-err" role="alert" hidden></p>
+
+    <form class="auth-form" id="action-form" style="margin-top:18px" novalidate hidden>
+      <label class="field" id="action-pw" hidden>
+        <span class="field-label">New password</span>
+        <input type="password" name="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" />
+      </label>
+      <button type="submit" class="btn btn-primary btn-block" id="action-submit">Confirm</button>
+    </form>
+
+    <button type="button" class="btn btn-ghost btn-block" id="action-done" style="margin-top:18px" hidden>Continue to KTP Events</button>
   </div>
 </div>
 
@@ -200,6 +265,6 @@
 <!-- ============ Toasts ============ -->
 <div id="toasts" class="toasts" aria-live="polite"></div>
 
-<script type="module" src="js/app.js"></script>
+<script type="module" src="js/app.js?v=211a05807b"></script>
 </body>
 </html>

@@ -7,7 +7,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/fireba
 import {
   getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
   signInWithEmailAndPassword, signOut, updateProfile, sendPasswordResetEmail,
-  sendEmailVerification, reload,
+  sendEmailVerification, reload, applyActionCode, checkActionCode,
+  verifyPasswordResetCode, confirmPasswordReset,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc,
@@ -34,6 +35,7 @@ export { app, auth, db };
 export {
   onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword,
   signOut, updateProfile, sendPasswordResetEmail, sendEmailVerification, reload,
+  applyActionCode, checkActionCode, verifyPasswordResetCode, confirmPasswordReset,
   collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, where, orderBy, limit, serverTimestamp, Timestamp,
   runTransaction, increment, writeBatch, collectionGroup,
@@ -53,6 +55,8 @@ export function friendlyError(err) {
     "auth/network-request-failed": "Network problem — check your connection.",
     "auth/operation-not-allowed": "Email/password sign-in isn't enabled in the Firebase console yet.",
     "auth/unauthorized-domain": "This domain isn't in the Firebase authorized-domains list yet.",
+    "auth/invalid-action-code": "This link has already been used or is no longer valid. Request a new one.",
+    "auth/expired-action-code": "This link has expired. Request a new one.",
     "permission-denied": "You don't have permission to do that.",
     "unavailable": "Can't reach the database right now. Check your connection.",
     "failed-precondition": "The database needs an index for this query — check the browser console for the link.",
